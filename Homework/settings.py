@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import dj_database_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,12 +21,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '0t2q9*ttt6^0*f2qkm5#+p-=c6+@(w91=ipbhq#zgg#67gskyl'
+SECRET_KEY = os.environ.get('SECRET_KEY', '0t2q9*ttt6^0*f2qkm5#+p-=c6+@(w91=ipbhq#zgg#67gskyl')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+if not DEBUG:
+    ALLOWED_HOSTS = ['.herokuapp.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -44,6 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -76,23 +80,19 @@ WSGI_APPLICATION = 'Homework.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-#    }
-#}
-
-DATABASES = {
-    'default': {
+# Database: use DATABASE_URL on Heroku (Postgres), else local MySQL
+DATABASES = {}
+if os.environ.get('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.config(conn_max_age=600, ssl_require=True)
+else:
+    DATABASES['default'] = {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'hw',
-        'USER': 'root',
-        'PASSWORD': 'homework1',
-        'HOST':'cdb-49vofix8.cd.tencentcdb.com',
-        'PORT':'10090',
+        'NAME': os.environ.get('DB_NAME', 'hw'),
+        'USER': os.environ.get('DB_USER', 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'homework1'),
+        'HOST': os.environ.get('DB_HOST', 'cdb-49vofix8.cd.tencentcdb.com'),
+        'PORT': os.environ.get('DB_PORT', '10090'),
     }
-}
 
 
 # Password validation
@@ -140,8 +140,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 #os.path.join(HERE, 'static/'),
 #)
 STATICFILES_DIRS = [
-os.path.join(BASE_DIR, 'static/'),
+    os.path.join(BASE_DIR, 'static/'),
 ]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
