@@ -1,0 +1,17 @@
+# Netlify build config for agile-homework-2020
+# Note: Netlify hosts static sites. The Django app itself needs a Python host
+# (e.g. Railway, Render, Heroku) for full backend. This deploys static assets.
+
+[build]
+  command = "pip install -r requirements.txt && python manage.py collectstatic --noinput --clear"
+  publish = "staticfiles"
+
+[build.environment]
+  PYTHON_VERSION = "3.9"
+  DJANGO_SETTINGS_MODULE = "Homework.settings"
+
+# Optional: redirect SPA or 404
+# [[redirects]]
+#   from = "/*"
+#   to = "/index.html"
+#   status = 200
